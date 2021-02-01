@@ -49,16 +49,14 @@ provider:
 # you can define service wide environment variables here
   environment:
     # Aurora
-    DBUsername: ${self:custom.DBUsername}
-    DBPassword: ${self:custom.DBPassword}
+    DBName: ${self:custom.DBName}
 
     # Lambda Functions
     API_KEY: ${self:custom.API_KEY}
 
 custom:
   # Database variables
-  DBUsername: ${file(./config.json):DBUsername}
-  DBPassword: ${file(./config.json):DBPassword}
+  DBName: lod
   MaxDBCapacity: 16
   MinDBCapacity: 2
   SecondsUntilAutoPause: 300
@@ -78,8 +76,16 @@ custom:
 functions:
   updateOdds:
     handler: handler.updateOdds
+    custom:
+      env-resources:
+        - RDSSecret
+        - RDSCluster
   updateResults:
     handler: handler.updateResults
+    custom:
+      env-resources:
+        - RDSSecret
+        - RDSCluster
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details
@@ -121,17 +127,28 @@ functions:
 #      variable2: value2
 plugins:
   - serverless-python-requirements
-  
+  - serverless-resources-env
+
 resources:
   Resources:
+    RDSSecret:
+      Type: AWS::SecretsManager::Secret
+      Properties:
+        Name: LODSecret
+        GenerateSecretString:
+          SecretStringTemplate: '{"username": "trcarney"}'
+          GenerateStringKey: "password"
+          PasswordLength: 22
+          ExcludeCharacters: '"@/\\'
     RDSCluster:
       Type: AWS::RDS::DBCluster
       Properties:
-        MasterUsername: ${self:custom.DBUsername}
-        MasterUserPassword: ${self:custom.DBPassword}
-        DatabaseName: lod
+        MasterUsername: !Sub '{{resolve:secretsmanager:${RDSSecret}::username}}'
+        MasterUserPassword: !Sub '{{resolve:secretsmanager:${RDSSecret}::password}}'
+        DatabaseName: ${self:custom.DBName}
         Engine: aurora
         EngineMode: serverless
+        EnableHttpEndpoint: true
         ScalingConfiguration:
           AutoPause: true
           MaxCapacity: ${self:custom.MaxDBCapacity}
