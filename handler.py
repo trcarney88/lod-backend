@@ -1,11 +1,14 @@
 import json
 import getOdds
 import getResults
+from dtbInterface import DbInterface
 
 
 def updateOdds(event, context):
+    db = DbInterface()
     status, statusMsg, matches = getOdds.parseJson()
-
+    db.updateOdds(matches)
+    
     body = {
         "message": statusMsg,
         "matches": len(matches),
