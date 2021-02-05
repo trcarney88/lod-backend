@@ -138,7 +138,7 @@ resources:
         GenerateSecretString:
           SecretStringTemplate: '{"username": "trcarney"}'
           GenerateStringKey: "password"
-          PasswordLength: 22
+          PasswordLength: 16
           ExcludeCharacters: '"@/\\'
     RDSCluster:
       Type: AWS::RDS::DBCluster
