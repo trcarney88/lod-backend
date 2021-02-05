@@ -131,29 +131,17 @@ plugins:
 
 resources:
   Resources:
-    RDSSecret:
-      Type: AWS::SecretsManager::Secret
+    OddsTable:
+      Type: AWS::DynamoDB::Table
       Properties:
-        Name: LODSecret
-        GenerateSecretString:
-          SecretStringTemplate: '{"username": "trcarney"}'
-          GenerateStringKey: "password"
-          PasswordLength: 16
-          ExcludeCharacters: '"@/\\'
-    RDSCluster:
-      Type: AWS::RDS::DBCluster
-      Properties:
-        MasterUsername: !Sub '{{resolve:secretsmanager:${RDSSecret}::username}}'
-        MasterUserPassword: !Sub '{{resolve:secretsmanager:${RDSSecret}::password}}'
-        DatabaseName: ${self:custom.DBName}
-        Engine: aurora
-        EngineMode: serverless
-        EnableHttpEndpoint: true
-        ScalingConfiguration:
-          AutoPause: true
-          MaxCapacity: ${self:custom.MaxDBCapacity}
-          MinCapacity: ${self:custom.MinDBCapacity}
-          SecondsUntilAutoPause: ${self:custom.SecondsUntilAutoPause}
+        TableName: Odds
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        BillingMode: PAY_PER_REQUEST
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
 #  Outputs:
 #     NewOutput:
 #       Description: "Description for the output"
