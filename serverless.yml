@@ -81,19 +81,28 @@ custom:
 
 functions:
   updateOdds:
-    handler: handler.updateOdds
+    handler: Lambdas/handler.updateOdds
     custom:
       env-resources:
         - OddsTable
   updateResults:
-    handler: handler.updateResults
+    handler: Lambdas/handler.updateResults
     custom:
       env-resources:
         - OddsTable
   ScheduleOdds:
-    handler: handler.ScheduleOdds
+    handler: Lambdas/handler.ScheduleOdds
   ScheduleResults:
-    handler: handler.ScheduleResults
+    handler: Lambdas/handler.ScheduleResults
+  GetOdds:
+    handler: Lambdas/handler.GetOdds
+    custom:
+      env-resources:
+        - OddsTable
+    events:
+      - http:
+          path: GetOdds
+          method: GET
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details
