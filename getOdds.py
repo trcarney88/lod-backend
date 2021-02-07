@@ -5,22 +5,23 @@ import requests
 
 endpoint = "https://api.jsonodds.com//api/odds"
 
-class OddsDetails:
-    oid = ''
-    oddType = ''
-    moneyLineAway = ''
-    moneyLineHome = ''
-    drawLine = ''
-    overLine = ''
-    totalNumber = ''
-    underLine = ''
-    pointSpreadAway = ''
-    pointSpreadHome = ''
-    pointSpreadAwayLine = ''
-    pointSpreadHomeLine = ''
-    lastUpdated = ''
 
-    def OddsDetails(self):
+class OddsDetails:
+    oid = ""
+    oddType = ""
+    moneyLineAway = ""
+    moneyLineHome = ""
+    drawLine = ""
+    overLine = ""
+    totalNumber = ""
+    underLine = ""
+    pointSpreadAway = ""
+    pointSpreadHome = ""
+    pointSpreadAwayLine = ""
+    pointSpreadHomeLine = ""
+    lastUpdated = ""
+
+    def __init__(self):
         self.oid = ""
         self.oddType = ""
         self.moneyLineAway = ""
@@ -34,79 +35,84 @@ class OddsDetails:
         self.pointSpreadAwayLine = ""
         self.pointSpreadHomeLine = ""
         self.lastUpdated = ""
-    
+
     def jsonDatatoOddsDetails(self, jsonData):
         for key in jsonData.keys():
-            if key == 'LastUpdated':
+            if key == "LastUpdated":
                 self.lastUpdated = str(jsonData[key])
-            elif key == 'PointSpreadAwayLine':
+            elif key == "PointSpreadAwayLine":
                 self.pointSpreadAwayLine = str(jsonData[key])
-            elif key == 'PointSpreadHomeLine':
+            elif key == "PointSpreadHomeLine":
                 self.pointSpreadHomeLine = str(jsonData[key])
-            elif key == 'MoneyLineHome':
+            elif key == "MoneyLineHome":
                 self.moneyLineHome = str(jsonData[key])
-            elif key == 'OverLine':
+            elif key == "OverLine":
                 self.overLine = str(jsonData[key])
-            elif key == 'MoneyLineAway':
+            elif key == "MoneyLineAway":
                 self.moneyLineAway = str(jsonData[key])
-            elif key == 'TotalNumber':
+            elif key == "TotalNumber":
                 self.totalNumber = str(jsonData[key])
-            elif key == 'UnderLine':
+            elif key == "UnderLine":
                 self.underLine = str(jsonData[key])
-            elif key == 'PointSpreadHome':
+            elif key == "PointSpreadHome":
                 self.pointSpreadHome = str(jsonData[key])
-            elif key == 'PointSpreadAway':
+            elif key == "PointSpreadAway":
                 self.pointSpreadAway = str(jsonData[key])
-            elif key == 'OddType':
+            elif key == "OddType":
                 self.oddType = str(jsonData[key])
-            elif key == 'DrawLine':
+            elif key == "DrawLine":
                 self.drawLine = str(jsonData[key])
-            elif key == 'ID':
-                self.oid = jsonData[key].replace('-', '')
+            elif key == "ID":
+                self.oid = jsonData[key].replace("-", "")
             else:
                 continue
 
+
 class MatchDetails:
-    eventId = ''
-    homeTeam = ''
-    awayTeam = ''
-    sport = None
-    matchTime = ''
-    details = ''
-    homePitcher = ''
-    awayPitcher = ''
+    eventId = ""
+    homeTeam = ""
+    awayTeam = ""
+    sport = ""
+    matchTime = ""
+    league = ""
+    details = ""
+    homePitcher = ""
+    awayPitcher = ""
     oddsList = []
 
-    def MatchDetails(self):
+    def __init__(self):
         self.eventId = ""
         self.homeTeam = ""
         self.awayTeam = ""
-        self.sport = None
+        self.sport = ""
         self.matchTime = ""
+        self.league = ""
         self.details = ""
         self.homePitcher = ""
         self.awayPitcher = ""
         self.oddsList = []
-    
+
     def jsonDatatoMatchDetails(self, match):
         for key in match.keys():
-            if key == 'HomeTeam':
+            if key == "HomeTeam":
                 self.homeTeam = str(match[key])
-            elif key == 'AwayPitcher':
+            elif key == "AwayPitcher":
                 self.awayPitcher = str(match[key])
-            elif key == 'HomePitcher':
+            elif key == "HomePitcher":
                 self.homePitcher = str(match[key])
-            elif key == 'Sport':
+            elif key == "Sport":
                 self.sport = str(match[key])
-            elif key == 'MatchTime':
+            elif key == "MatchTime":
                 self.matchTime = str(match[key])
-            elif key == 'Details':
+            elif key == "League":
+                self.league = str(match[key]['Name'])
+            elif key == "Details":
                 self.details = str(match[key])
-            elif key == 'AwayTeam':
+            elif key == "AwayTeam":
                 self.awayTeam = str(match[key])
-            elif key == 'ID':
-                self.eventId = match[key].replace('-', '')
-            elif key == 'Odds':
+            elif key == "ID":
+                self.eventId = match[key].replace("-", "")
+            elif key == "Odds":
                 for oddObj in match[key]:
                     oddDetail = OddsDetails()
                     oddDetail.jsonDatatoOddsDetails(jsonData=oddObj)
@@ -119,22 +125,21 @@ def parseJson():
     status = True
     statusMsg = "All Good!"
     jsonData = []
-    api_key = os.environ['API_KEY']  
+    api_key = os.environ["API_KEY"]
 
     matches = []
 
     try:
-        r = requests.get(endpoint, headers={'x-api-key': api_key})
+        r = requests.get(endpoint, headers={"x-api-key": api_key})
 
-        if r.status_code == requests.codes.ok:
+        if r.status_code == requests.codes['ok']:
             jsonData = r.json()
-                    
+
             for match in jsonData:
                 matchDetails = MatchDetails()
                 matchDetails.jsonDatatoMatchDetails(match=match)
                 matches.append(matchDetails)
-            
-            
+
             return [status, statusMsg, matches]
         else:
             status = False
@@ -143,12 +148,19 @@ def parseJson():
 
     except:
         status = False
-        statusMsg = "Unexpected Exception was Thrown: " + str(sys.exc_info()[0]) + ' ' + str(sys.exc_info()[1]) + '; The error occured on line ' + str(sys.exc_info()[2].tb_lineno)
-        return [status,statusMsg, []]
-    
-    
-if __name__ == '__main__':
+        statusMsg = (
+            "Unexpected Exception was Thrown: "
+            + str(sys.exc_info()[0])
+            + " "
+            + str(sys.exc_info()[1])
+            + "; The error occured on line "
+            + str(sys.exc_info()[2].tb_lineno)
+        )
+        return [status, statusMsg, []]
+
+
+if __name__ == "__main__":
     status, statusMsg, matches = parseJson()
-    
-    print('Status: ' + statusMsg)
-    print('Number of Matches:', len(matches))
+
+    print("Status: " + statusMsg)
+    print("Number of Matches:", len(matches))

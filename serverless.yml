@@ -24,11 +24,10 @@ frameworkVersion: '2'
 provider:
   name: aws
   runtime: python3.8
-  role: arn:aws:iam::784692787615:role/lod_general
-
-# you can overwrite defaults here
-  stage: dev
+  stage: ${opt:stage,'dev'}
   region: us-west-2
+  role: arn:aws:iam::784692787615:role/lod_general
+  timeout: 120
 
 # you can add statements to the Lambda function's IAM Role here
 #  iamRoleStatements:
@@ -49,16 +48,18 @@ provider:
 # you can define service wide environment variables here
   environment:
     # Aurora
-    DBUsername: ${self:custom.DBUsername}
-    DBPassword: ${self:custom.DBPassword}
+    DBName: ${self:custom.DBName}
 
     # Lambda Functions
     API_KEY: ${self:custom.API_KEY}
 
+    # Step Functions
+    ODDS_ARN: ${self:custom.STEP.ODDS_ARN}
+    RESULTS_ARN: ${self:custom.STEP.RESULTS_ARN}
+
 custom:
   # Database variables
-  DBUsername: ${file(./config.json):DBUsername}
-  DBPassword: ${file(./config.json):DBPassword}
+  DBName: lod
   MaxDBCapacity: 16
   MinDBCapacity: 2
   SecondsUntilAutoPause: 300
@@ -66,6 +67,9 @@ custom:
   # Outside Data
   API_KEY: ${ssm:/JsonOdds~true}
 
+  STEP:
+    ODDS_ARN: arn:aws:states:${self:provider.region}:784692787615:stateMachine:ParseOddsStateMachine-${self:provider.stage}
+    RESULTS_ARN: arn:aws:states:${self:provider.region}:784692787615:stateMachine:ParseResultsStateMachine-${self:provider.stage}
 # you can add packaging information here
 #package:
 #  include:
@@ -78,8 +82,18 @@ custom:
 functions:
   updateOdds:
     handler: handler.updateOdds
+    custom:
+      env-resources:
+        - OddsTable
   updateResults:
     handler: handler.updateResults
+    custom:
+      env-resources:
+        - OddsTable
+  ScheduleOdds:
+    handler: handler.ScheduleOdds
+  ScheduleResults:
+    handler: handler.ScheduleResults
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details
@@ -119,24 +133,70 @@ functions:
 #    Define function environment variables here
 #    environment:
 #      variable2: value2
+stepFunctions:
+  stateMachines:
+    oddsStepFunc:
+      id: ParseOddsStateMachine
+      name: ParseOddsStateMachine-${self:provider.stage}
+      definition:
+        Comment: "Calls the JsonOdds API to update the match details and odds databases"
+        StartAt: Wait
+        States:
+          Wait:
+            Type: Wait
+            TimestampPath: "$.waitUntil"
+            Next: ParseOdds
+          ParseOdds:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [updateOdds, Arn]
+            Next: ScheduleNext
+          ScheduleNext:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [ScheduleOdds, Arn]
+            End: true
+    resultsStepFunc:
+      id: ParseResultsStateMachine
+      name: ParseResultsStateMachine-${self:provider.stage}
+      definition:
+        Comment: "Calls the JsonOdds API to update the results database and update users bets and statistics"
+        StartAt: Wait
+        States:
+          Wait:
+            Type: Wait
+            TimestampPath: "$.waitUntil"
+            Next: ParseResults
+          ParseResults:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [updateResults, Arn]
+            Next: ScheduleNext
+          ScheduleNext:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [ScheduleResults, Arn]
+            End: true 
+  validate: true # enable pre-deployment definition validation (disabled by default)
+
 plugins:
+  - serverless-step-functions
   - serverless-python-requirements
-  
+  - serverless-resources-env
+
 resources:
   Resources:
-    RDSCluster:
-      Type: AWS::RDS::DBCluster
+    OddsTable:
+      Type: AWS::DynamoDB::Table
       Properties:
-        MasterUsername: ${self:custom.DBUsername}
-        MasterUserPassword: ${self:custom.DBPassword}
-        DatabaseName: lod
-        Engine: aurora
-        EngineMode: serverless
-        ScalingConfiguration:
-          AutoPause: true
-          MaxCapacity: ${self:custom.MaxDBCapacity}
-          MinCapacity: ${self:custom.MinDBCapacity}
-          SecondsUntilAutoPause: ${self:custom.SecondsUntilAutoPause}
+        TableName: Odds
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        BillingMode: PAY_PER_REQUEST
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
 #  Outputs:
 #     NewOutput:
 #       Description: "Description for the output"
