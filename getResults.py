@@ -14,8 +14,9 @@ finalTypes = [
     "Retired",
     "TeamOneWithdrew",
     "TeamTwoWithdrew",
-    "Scratched"
+    "Scratched",
 ]
+
 
 class Result:
     id = None
@@ -47,52 +48,53 @@ class Result:
 
     def jsonToResult(self, jsonData):
         for key in jsonData.keys():
-            if key == 'EventID':
-                self.eventId = jsonData[key].replace('-', '')
-            elif key == 'BinaryScore':
+            if key == "EventID":
+                self.eventId = jsonData[key].replace("-", "")
+            elif key == "BinaryScore":
                 self.binaryScore = str(jsonData[key])
-            elif key == 'HomeScore':
+            elif key == "HomeScore":
                 self.homeScore = str(jsonData[key])
-            elif key == 'AwayScore':
+            elif key == "AwayScore":
                 self.awayScore = str(jsonData[key])
-            elif key == 'OddType':
+            elif key == "OddType":
                 self.oddType = str(jsonData[key])
-            elif key == 'ID':
-                self.id = jsonData[key].replace('-', '')
-            elif key == 'FinalType':
+            elif key == "ID":
+                self.id = jsonData[key].replace("-", "")
+            elif key == "FinalType":
                 self.finalType = str(jsonData[key])
-            elif key == 'Name':
+            elif key == "Name":
                 self.name = str(jsonData[key])
-            elif key == 'FinalPosition':
+            elif key == "FinalPosition":
                 self.finalPosition = str(jsonData[key])
-            elif key == 'Final':
+            elif key == "Final":
                 self.final = str(jsonData[key])
-            elif key == 'AETScore':
+            elif key == "AETScore":
                 self.aetScore = str(jsonData[key])
-            elif key == 'PKScore':
+            elif key == "PKScore":
                 self.pkScore = str(jsonData[key])
             else:
                 continue
-    
+
+
 def parseJson():
     status = True
     statusMsg = "All Good!"
     jsonData = []
-    api_key = os.environ['API_KEY']
-    
+    api_key = os.environ["API_KEY"]
+
     results = []
 
     try:
-        r = requests.get(endpoint, headers={'x-api-key': api_key})
+        r = requests.get(endpoint, headers={"x-api-key": api_key})
 
-        if r.status_code == requests.codes.ok:
+        if r.status_code == requests.codes['ok']:
             jsonData = r.json()
-                       
+
             for data in jsonData:
                 r = Result()
                 r.jsonToResult(data)
                 results.append(r)
-            
+
             return [status, statusMsg, results]
         else:
             status = False
@@ -101,10 +103,18 @@ def parseJson():
 
     except:
         status = False
-        statusMsg = "Unexpected Exception was Thrown: " + str(sys.exc_info()[0]) + ' ' + str(sys.exc_info()[1]) + '; The error occured on line ' + str(sys.exc_info()[2].tb_lineno)
-        return [status,statusMsg, []]
+        statusMsg = (
+            "Unexpected Exception was Thrown: "
+            + str(sys.exc_info()[0])
+            + " "
+            + str(sys.exc_info()[1])
+            + "; The error occured on line "
+            + str(sys.exc_info()[2].tb_lineno)
+        )
+        return [status, statusMsg, []]
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     status, statusMsg, results = parseJson()
     print(statusMsg)
-    print('Results:', len(results))
+    print("Results:", len(results))

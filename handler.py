@@ -27,7 +27,12 @@ def updateResults(event, context):
     status, statusMsg, results = getResults.parseJson()
     updated = db.updateResults(results)
 
-    body = {"message": statusMsg, "results": len(results), "input": event, 'updated': updated}
+    body = {
+        "message": statusMsg,
+        "results": len(results),
+        "input": event,
+        "updated": updated,
+    }
     statusCode = 400
     if status:
         statusCode = 200
@@ -36,38 +41,45 @@ def updateResults(event, context):
 
     return response
 
+
 def ScheduleOdds(event, context):
     waitInterval = 4
     waitTime = getWaitTime(waitInterval)
-    
-    print(os.environ['ODDS_ARN'])
-    client = boto3.client('stepfunctions')
-    inputStr = '{"waitUntil": "' + waitTime +'"}'
-    response = client.start_execution(stateMachineArn=os.environ['ODDS_ARN'], input = inputStr)
-    
+
+    print(os.environ["ODDS_ARN"])
+    client = boto3.client("stepfunctions")
+    inputStr = '{"waitUntil": "' + waitTime + '"}'
+    response = client.start_execution(
+        stateMachineArn=os.environ["ODDS_ARN"], input=inputStr
+    )
+
     return {
-        "message": 'I just scheduled the next odds update',
-        "executionArn": response['executionArn']
+        "message": "I just scheduled the next odds update",
+        "executionArn": response["executionArn"],
     }
+
 
 def ScheduleResults(event, context):
     waitInterval = 1
     waitTime = getWaitTime(waitInterval)
 
-    client = boto3.client('stepfunctions')
-    inputStr = '{"waitUntil": "' + waitTime +'"}'
-    response = client.start_execution(stateMachineArn=os.environ['RESULTS_ARN'], input = inputStr)
-    
+    client = boto3.client("stepfunctions")
+    inputStr = '{"waitUntil": "' + waitTime + '"}'
+    response = client.start_execution(
+        stateMachineArn=os.environ["RESULTS_ARN"], input=inputStr
+    )
+
     return {
-        "message": 'I just scheduled the next odds update',
-        "executionArn": response['executionArn']
+        "message": "I just scheduled the next odds update",
+        "executionArn": response["executionArn"],
     }
+
 
 def getWaitTime(interval):
     now = arrow.utcnow()
-    
+
     time = now.shift(hours=interval)
-        
+
     ret = time.for_json()
-    
+
     return ret
