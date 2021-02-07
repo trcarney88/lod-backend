@@ -6,6 +6,7 @@ import UpdateOdds
 import UpdateResults
 from dtbInterface import DbInterface
 import StepFunctions
+import ApiFunctions
 
 
 def updateOdds(event, context):
@@ -49,3 +50,13 @@ def ScheduleOdds(event, context):
 
 def ScheduleResults(event, context):
     return StepFunctions.ScheduleResults()
+
+def GetOdds(event, context):
+    body = ApiFunctions.GetOdds()
+    resp = {
+        "statusCode": 200,
+        "body": body,
+        "isBase64Encoded": False
+    }
+
+    return resp

@@ -1,6 +1,6 @@
 import os
+import arrow
 import boto3
-from boto3.dynamodb.conditions import Key
 import arrow
 
 
@@ -165,3 +165,17 @@ class DbInterface:
                         },
                     )
                     return updated
+    def GetAllOdds(self):
+        query = self.client.scan(
+            TableName=self.oddsTable,
+            Select='ALL_ATTRIBUTES',
+            ScanFilter={
+                'Final': {
+                    "AttributeValueList":[ {"S":"False"} ],
+                    "ComparisonOperator": "EQ"
+                }
+            }
+        )
+        items = query['Items']
+        return items
+
