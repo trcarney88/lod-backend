@@ -30,6 +30,6 @@ def ScheduleResults():
     )
 
     return {
-        "message": "I just scheduled the next odds update",
+        "message": "I just scheduled the next results update",
         "executionArn": response["executionArn"],
     }
